@@ -1,0 +1,4 @@
+# Ignore big files
+data
+assets
+*.tsv
