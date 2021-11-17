@@ -1,4 +1,6 @@
 import gzip
+import re
+import nltk
 
 KEYNAME = "WARC-TREC-ID"
 
@@ -18,6 +20,11 @@ def find_labels(payload):
 
     # Problem 1: The webpage is typically encoded in HTML format.
     # We should get rid of the HTML tags and retrieve the text. How can we do it?
+
+
+    clean = re.sub('<[^>]*>', '', payload)
+    clean = clean.rstrip().replace('\r', '').replace('\n', '')
+    print(clean)
 
     # Problem 2: Let's assume that we found a way to retrieve the text from a webpage. How can we recognize the
     # entities in the text?
