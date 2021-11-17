@@ -43,6 +43,7 @@ def find_labels(payload):
         if strLength > 100 and nLength < 3:
             clean += stripped + '\n'
             
+    # The resulting string
     print(clean)
 
     # Problem 2: Let's assume that we found a way to retrieve the text from a webpage. How can we recognize the
