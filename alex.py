@@ -11,47 +11,16 @@ from bs4 import BeautifulSoup
 
 from test_elasticsearch_server import search
 
+import trident
+KBPATH='assets/wikidata-20200203-truthy-uri-tridentdb'
+
+
 # import flair
 # from flair.data import Sentence
 # from flair.models import SequenceTagger
 
 
 KEYNAME = "WARC-TREC-ID"
-
-
-def clean(data):
-    soup = BeautifulSoup(data, 'html.parser')
-    clean = ""
-
-    # Loop through every p tag within the payload  
-    for paragraph in soup.find_all('p'):
-        # Remove any left over HTML tags
-        stripped = re.sub('<[^>]*>', '', str(paragraph))
-        
-        # Number of \n tags in the stripped string
-        nLength = len(stripped.split('\n'))
-        
-        # The length of the string
-        strLength = len(stripped)
-
-        # If the string has a length of more then 100
-        # and contains less than 3 \n tags, 
-        # add it to the final result
-        if strLength > 100 and nLength < 3:
-            # print(stripped)
-            # if stripped == "":
-                # print("yes")
-            clean += stripped
-
-    return clean   
-
-def get_entities_nltk(cleaned):   
-    # Loop through tokenised version of the data
-    for sent in nltk.sent_tokenize(cleaned):
-        # Apply POS tagging to sentenice and loop through
-        for chunk in nltk.ne_chunk(nltk.pos_tag(nltk.word_tokenize(sent))):
-            if hasattr(chunk, 'label'):
-                return (chunk.label(), ' '.join(c[0] for c in chunk))
 
 # The goal of this function process the webpage and returns a list of labels -> entity ID
 
@@ -72,42 +41,85 @@ def find_labels(payload):
 
     # Problem 1: The webpage is typically encoded in HTML format.
     # We should get rid of the HTML tags and retrieve the text. How can we do it?
-      
+    def clean(data):
+    
+        soup = BeautifulSoup(data, 'html.parser')
+        clean = ""
+
+        # Loop through every p tag within the payload  
+        for paragraph in soup.find_all('p'):
+            # Remove any left over HTML tags
+            stripped = re.sub('<[^>]*>', '', str(paragraph))
+            
+            # Number of \n tags in the stripped string
+            nLength = len(stripped.split('\n'))
+            
+            # The length of the string
+            strLength = len(stripped)
+
+            # If the string has a length of more then 100
+            # and contains less than 3 \n tags, 
+            # add it to the final result
+            if strLength > 100 and nLength < 3:
+                clean += stripped + '\n'
+
+        return clean.replace('\n', '')   
     # The resulting string
     # print(clean)
 
     # Problem 2: Let's assume that we found a way to retrieve the text from a webpage. How can we recognize the
     # entities in the text?
 
-    
+    def get_entities_nltk(cleaned):   
+
+        if(cleaned != ""):
+            
+            # Loop through tokenised version of the data
+            for sent in nltk.sent_tokenize(cleaned):
+                # Apply POS tagging to sentenice and loop through
+                for chunk in nltk.ne_chunk(nltk.pos_tag(nltk.word_tokenize(sent))):
+                    # Maybwe we can do something here?
+                    if hasattr(chunk, 'label'):
+                        return (chunk.label(), ' '.join(c[0] for c in chunk))
 
     cleaned = clean(payload)
 
-    print(cleaned)
-    # if isinstance(cleaned, str):
-
-    #     chunks = get_entities_nltk(cleaned)
-    #     print(chunks);
+    chunks = get_entities_nltk(cleaned)
     
+
+
     
-    # res = []
-
-    # for val in chunks:
-    #     if val != None:
-    #         res.append(val)
-
-    # print(res)
-
-
     # Problem 3: We now have to disambiguate the entities in the text. For instance, let's assugme that we identified
     # the entity "Michael Jordan". Which entity in Wikidata is the one that is referred to in the text?
-
-
-    # QUERY = chunks[1]
-    # print(QUERY)
-    # for entity, labels in search(QUERY).items():
-    #     print(entity, labels)
+    
+    
+    if chunks is not None:
         
+        QUERY = chunks[1]
+        items = search(QUERY).items()
+        
+        # something something sparql
+
+        for entity, labels in items:
+            
+            if key and (chunks[1] in payload):
+                print(key, chunks[1], entity)
+                yield key, chunks[1], entity
+
+        # "For instance, if you know that the webpage refers to persons
+        # then you can query the knowledge base to filter out all the entities that are not persons..."
+        
+
+        db = trident.Db(KBPATH)    
+        query = """
+            PREFIX wde: <http://www.wikidata.org/entity/Q12621138>
+            PREFIX 
+        """
+
+        results = db.sparql(query)
+
+        
+    
 
     # To tackle this problem, you have access to two tools that can be useful. The first is a SPARQL engine (Trident)
     # with a local copy of Wikidata. The file "test_sparql.py" shows how you can execute SPARQL queries to retrieve
@@ -126,11 +138,11 @@ def find_labels(payload):
     # For now, we are cheating. We are going to returthe labels that we stored in sample-labels-cheat.txt
     # Instead of doing that, you should process the text to identify the entities. Your implementation should return
     # the discovered disambiguated entities with the same format so that I can check the performance of your program.
-    cheats = dict((line.split('\t', 2) for line in open(
-        'data/sample-labels-cheat.txt').read().splitlines()))
-    for label, wikidata_id in cheats.items():
-        if key and (label in payload):
-            yield key, label, wikidata_id
+    # cheats = dict((line.split('\t', 2) for line in open(
+    #     'data/sample-labels-cheat.txt').read().splitlines()))
+    # for label, wikidata_id in cheats.items():
+    #     if key and (label in payload):
+    #         yield key, label, wikidata_id
 
 
 def split_records(stream):

@@ -1,65 +1,60 @@
 import gzip
 import re
-
-import nltk
-# nltk.download('punkt')
-# nltk.download('averaged_perceptron_tagger')
-# nltk.download('maxent_ne_chunker')
-# nltk.download('words')
-
+from typing import Text
 from bs4 import BeautifulSoup
-
+from html2text import html2text
+from pprint import pprint
+import spacy
+from spacy import displacy
+import en_core_web_sm
 from test_elasticsearch_server import search
-
-# import flair
-# from flair.data import Sentence
-# from flair.models import SequenceTagger
+nlp = en_core_web_sm.load()
 
 
 KEYNAME = "WARC-TREC-ID"
 
 
-def clean(data):
-    soup = BeautifulSoup(data, 'html.parser')
-    clean = ""
 
-    # Loop through every p tag within the payload  
-    for paragraph in soup.find_all('p'):
-        # Remove any left over HTML tags
-        stripped = re.sub('<[^>]*>', '', str(paragraph))
-        
-        # Number of \n tags in the stripped string
-        nLength = len(stripped.split('\n'))
-        
-        # The length of the string
-        strLength = len(stripped)
+def clean(payload):
+    # First we remove inline JavaScript/CSS:
+    cleaned = re.sub(r"(?is)<(script|style).*?>.*?(</\1>)", "", payload.strip())
 
-        # If the string has a length of more then 100
-        # and contains less than 3 \n tags, 
-        # add it to the final result
-        if strLength > 100 and nLength < 3:
-            # print(stripped)
-            # if stripped == "":
-                # print("yes")
-            clean += stripped
+    # Then we remove html comments. This has to be done before removing regular
+    # tags since comments can contain '>' characters.
+    cleaned = re.sub(r"(?s)<!--(.*?)-->[\n]?", "", cleaned)
+    # Next we can remove the remaining tags:
+    cleaned = re.sub(r"(?s)<.*?>", " ", cleaned)
 
-    return clean   
+    #HTML to clean, easy-to-read ASCII text
+    text = html2text(cleaned)
 
-def get_entities_nltk(cleaned):   
-    # Loop through tokenised version of the data
+    #create instance of BeautifulSoup
+    soup = BeautifulSoup(text, 'html.parser')
+
+    #only return if text formality 'charset=UTF-8' is met
+    if ('charset=UTF-8' in soup.get_text() and len(soup.get_text())>1000):
+        return (soup.get_text('\n').split('charset=UTF-8')[1])
+
+
+""" def get_entities_nltk(cleaned):   
     for sent in nltk.sent_tokenize(cleaned):
-        # Apply POS tagging to sentenice and loop through
         for chunk in nltk.ne_chunk(nltk.pos_tag(nltk.word_tokenize(sent))):
             if hasattr(chunk, 'label'):
-                return (chunk.label(), ' '.join(c[0] for c in chunk))
+                return (chunk.label(), ' '.join(c[0] for c in chunk)) """
+
+
+
+def get_entities_spacy(cleaned):
+    doc = nlp(cleaned)
+    return ([(X.text, X.label_) for X in doc.ents])
+    #print(displacy.render(doc, style="ent"))
+    #return doc
+
 
 # The goal of this function process the webpage and returns a list of labels -> entity ID
-
-
 def find_labels(payload):
     if payload == '':
         return
-
 
     # The variable payload contains the source code of a webpage and some additional meta-data.
     # We firt retrieve the ID of the webpage, which is indicated in a line that starts with KEYNAME.
@@ -69,45 +64,27 @@ def find_labels(payload):
         if line.startswith(KEYNAME):
             key = line.split(': ')[1]
             break
-
+        
     # Problem 1: The webpage is typically encoded in HTML format.
     # We should get rid of the HTML tags and retrieve the text. How can we do it?
-      
-    # The resulting string
-    # print(clean)
+
+    cleaned = clean(payload)
+
 
     # Problem 2: Let's assume that we found a way to retrieve the text from a webpage. How can we recognize the
     # entities in the text?
 
-    
-
-    cleaned = clean(payload)
-
-    print(cleaned)
-    # if isinstance(cleaned, str):
-
-    #     chunks = get_entities_nltk(cleaned)
-    #     print(chunks);
-    
-    
-    # res = []
-
-    # for val in chunks:
-    #     if val != None:
-    #         res.append(val)
-
-    # print(res)
-
-
+    if isinstance(cleaned, str):
+        chunks = get_entities_spacy(cleaned)
+        #print(chunks[1])
+        print(search(chunks[1][1]).items())
     # Problem 3: We now have to disambiguate the entities in the text. For instance, let's assugme that we identified
     # the entity "Michael Jordan". Which entity in Wikidata is the one that is referred to in the text?
 
+        #QUERY = chunks[1]
+        #for entity, labels in search(QUERY).items():
+         #   print(entity, labels)
 
-    # QUERY = chunks[1]
-    # print(QUERY)
-    # for entity, labels in search(QUERY).items():
-    #     print(entity, labels)
-        
 
     # To tackle this problem, you have access to two tools that can be useful. The first is a SPARQL engine (Trident)
     # with a local copy of Wikidata. The file "test_sparql.py" shows how you can execute SPARQL queries to retrieve
@@ -123,11 +100,11 @@ def find_labels(payload):
 
     # Obviously, more sophisticated implementations that the one suggested above are more than welcome :-)
 
+
     # For now, we are cheating. We are going to returthe labels that we stored in sample-labels-cheat.txt
     # Instead of doing that, you should process the text to identify the entities. Your implementation should return
     # the discovered disambiguated entities with the same format so that I can check the performance of your program.
-    cheats = dict((line.split('\t', 2) for line in open(
-        'data/sample-labels-cheat.txt').read().splitlines()))
+    cheats = dict((line.split('\t', 2) for line in open('data/sample-labels-cheat.txt').read().splitlines()))
     for label, wikidata_id in cheats.items():
         if key and (label in payload):
             yield key, label, wikidata_id
@@ -143,7 +120,6 @@ def split_records(stream):
             payload += line
     yield payload
 
-
 if __name__ == '__main__':
     import sys
     try:
@@ -155,5 +131,7 @@ if __name__ == '__main__':
     with gzip.open(INPUT, 'rt', errors='ignore') as fo:
         for record in split_records(fo):
             for key, label, wikidata_id in find_labels(record):
-                # print(key + '\t' + label + '\t' + wikidata_id)
+                #print(key + '\t' + label + '\t' + wikidata_id)
                 pass
+
+    

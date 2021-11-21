@@ -2,4 +2,4 @@
 Repository for the first assignment for Web Data Processing.
 
 ### Dependencies
-Run `pip3 install --user -U nltk && pip3 install beautifulsoup4` to install external libraries
+Run `pip3 install --user -U nltk && pip3 install beautifulsoup4 && pip3 install --user flair` to install external libraries

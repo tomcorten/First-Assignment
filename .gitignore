@@ -1,4 +1,6 @@
 # Ignore big files
+
+__pycache__/*
 data
 assets
 *.tsv
