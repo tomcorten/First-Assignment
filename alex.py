@@ -86,6 +86,7 @@ def find_labels(payload):
 
     chunks = get_entities_nltk(cleaned)
     
+    
 
 
     
@@ -103,20 +104,117 @@ def find_labels(payload):
         for entity, labels in items:
             
             if key and (chunks[1] in payload):
-                print(key, chunks[1], entity)
-                yield key, chunks[1], entity
+                label = next(iter(labels))
+                category = chunks[0]
+
+                wdp = "P31" # Instance of
+
+                db = trident.Db(KBPATH)    
+
+                # p = predicate, s = subject, o = object
+                # subject_id = db.lookup_id(entity) 
+                # pos = db.po(subject_id) # db.po(s: int) -> List[(p: int, o: int)]|None ==> thus ID = s: int | ID = subject (entity)
+
+                # i think i got it
+
+                # I'm trying to figure out how this works, i'm assuming here that db.po = db.predicate_object()
+                # thus the result (a, b) = array of (predicate_id, object_id)
+                # and because the first argument is id, it means that s = entiity
+                # so now we can https://canvas.vu.nl/courses/55617/pages/extra-documentation-on-first-assignment 
+              
+              
+              
+                # print(lookup_str())
+
+                # now we somehow need to figure out what the predicate_id is of category (chunks[0])
+                # for predicate_id, object_id in pos:
+                    # print(predicate_id)
+                    # print(db.lookup_str(predicate_id))
+                    # print(db.search_id("person"))
+                    #the IDs are so weird - sometimes they are 1, or 5 and other times 3099744467
+                    # i think the lower numbers are more like 'base' types?
+                    # I'd assume that "PERSON" has a lower ID than a full name
+                    # print(db.exists(subject_id, predicate_id, object_id))
+                #     if db.exists(subject_id, predicate_id, object_id):
+                # category = "https://www.wikidata.org/wiki/Q215627"
+              
+                query = """
+                    PREFIX wdp: <http://www.wikidata.org/prop/direct/> 
+                    PREFIX wdpn: <http://www.wikidata.org/prop/direct-normalized/>
+                    select ?s where { ?s wdp:%s %s . } LIMIT 10
+                """ % (wdp, entity)
+
+                # print(query)
+
+                # results = db.sparql(query)
+
+                # print(results)
+
+
+                # print(db.outdegree()) # Killed, oh there goes your elasticsearch connection
+                # nice to know that trident can kill an elasticsearch connection c:
+                
+               
+
+        
+
+                # predicates_objects = db.po(subject_id)
+                # for predicate_id, object_id in predicates_objects:
+                #     print(object_id)
+                #     print(db.lookup_str(object_id)) # doesn't look like objects to me (or i just don't know what an object is)
+                    # maybe i dont know what an object is 😅
+                    # i thoughts objects were things like (person, organization, etc.)
+                    # however, the ID 3260604856 tells me there are possibly millions of objects, so I'm not really sure anymore hahah
+                    # I think my brain is fried
+
+                    
+# %s = subject, wdp = wiki data predicate, wde = wiki data entity,  wdpn = wiki data predicate normalized (because p = predicate and the url says normalized)?? (that's probably the .)
+                # select subject where { subject, predicate(instance_of), object(person?) }
+                # where subject is a person
+                # ASK { ?s rdf:type category } 
+                # oooohh shit
+            
+                # category labels: FACILITY, GPE, GSP, LOCATION, ORGANIZATION, PERSON
+                # do we need to find these WDE's on our own?
+                # Maybe we can generate them somehow
+                # PERSON = https://www.wikidata.org/wiki/Q215627
+                # GPE = https://www.wikidata.org/wiki/Q561912
+                # or do we need to query it?
+                # print("i think here: ", category)
+
+                # hmmmm look at this:https://query.wikidata.org/#PREFIX%20wde%3A%20%3Chttp%3A%2F%2Fwww.wikidata.org%2Fentity%2F%3E%20%0APREFIX%20wdp%3A%20%3Chttp%3A%2F%2Fwww.wikidata.org%2Fprop%2Fdirect%2F%3E%20%0APREFIX%20wdpn%3A%20%3Chttp%3A%2F%2Fwww.wikidata.org%2Fprop%2Fdirect-normalized%2F%3E%0Aselect%20%3Fs%20where%20%7B%20%3Fs%20wdp%3AP31%20wde%3AQ10373242%20.%20%7D%20LIMIT%2010
+                # instance of (WDT P31) death (WD Q4)
+                # results: wd:Q431888, wd:Q523883
+                # does that mean we have to: instanceof (Person), and check if the elasticsearch result is in the trident result?
+                # would be weird, considering that there are probably billions of persons in there
+                # yeah it seems a bit strange
+                # SELECT elasticsearch_result WHERE { wdp: person } ??? would that work
+                # Possibly, I'm trying to look online but I can't find much on it
+                # isn't there some cheat sheet on canvas?
+
+                # there is one way to do it, but it requires using their API which maybe is a bit much
+
+                # https://www.wikidata.org/w/api.php?action=wbsearchentities&search=Person&language=en
+                                                                                    #^^ key word
+                # Maybe it can be returned from NLTK along with the name of the entity
+                # https://canvas.vu.nl/courses/55617/pages/extra-documentation-on-first-assignment
+
+                # db.lookup_relstr(id: int) -> str|None
+
+                # ... wait a second:
+                # term = "<http://www.wikidata.org/entity/Q145>"
+                # term_id = db.lookup_id(term)
+                # print(db.po(term_id))
+                # Apparently the regex wasn't really needed
+
+
+                # results = db.sparql(query)
+                
+                yield key, label, entity 
 
         # "For instance, if you know that the webpage refers to persons
         # then you can query the knowledge base to filter out all the entities that are not persons..."
-        
-
-        db = trident.Db(KBPATH)    
-        query = """
-            PREFIX wde: <http://www.wikidata.org/entity/Q12621138>
-            PREFIX 
-        """
-
-        results = db.sparql(query)
+    
 
         
     
