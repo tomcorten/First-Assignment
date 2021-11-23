@@ -1,55 +1,80 @@
 import gzip
+from os import link
 import re
 from typing import Text
 from bs4 import BeautifulSoup
-from html2text import html2text
-from pprint import pprint
-import spacy
-from spacy import displacy
-import en_core_web_sm
 from test_elasticsearch_server import search
-nlp = en_core_web_sm.load()
+from test_sparql import base_model
+from pprint import pprint
 
+#import spacy
+#from spacy import displacy
+#import en_core_web_sm
+#nlp = en_core_web_sm.load()
+
+#from flair.data import Sentence
+#from flair.models import SequenceTagger
+#tagger = SequenceTagger.load('ner')
+
+import nltk
+nltk.download('punkt')
+nltk.download('averaged_perceptron_tagger')
+nltk.download('maxent_ne_chunker')
+nltk.download('words')
 
 KEYNAME = "WARC-TREC-ID"
 
 
 
-def clean(payload):
-    # First we remove inline JavaScript/CSS:
-    cleaned = re.sub(r"(?is)<(script|style).*?>.*?(</\1>)", "", payload.strip())
+def clean(data):
+    soup = BeautifulSoup(data, 'html.parser')
+    clean = ""
 
-    # Then we remove html comments. This has to be done before removing regular
-    # tags since comments can contain '>' characters.
-    cleaned = re.sub(r"(?s)<!--(.*?)-->[\n]?", "", cleaned)
-    # Next we can remove the remaining tags:
-    cleaned = re.sub(r"(?s)<.*?>", " ", cleaned)
+    # Loop through every p tag within the payload  
+    for paragraph in soup.find_all('p'):
+    # Remove any left over HTML tags
+        stripped = re.sub('<[^>]*>', '', str(paragraph))
+            
+        # Number of \n tags in the stripped string
+        nLength = len(stripped.split('\n'))
+                
+        # The length of the string
+        strLength = len(stripped)
 
-    #HTML to clean, easy-to-read ASCII text
-    text = html2text(cleaned)
-
-    #create instance of BeautifulSoup
-    soup = BeautifulSoup(text, 'html.parser')
-
-    #only return if text formality 'charset=UTF-8' is met
-    if ('charset=UTF-8' in soup.get_text() and len(soup.get_text())>1000):
-        return (soup.get_text('\n').split('charset=UTF-8')[1])
+        # If the string has a length of more than 100
+        # and contains less than 3 \n tags, 
+        # add it to the final result
+        if strLength > 100 and nLength < 3:
+            clean += stripped + '\n'
+    return clean.replace('\n', '')   
 
 
-""" def get_entities_nltk(cleaned):   
+def get_entities_nltk(cleaned):   
     for sent in nltk.sent_tokenize(cleaned):
         for chunk in nltk.ne_chunk(nltk.pos_tag(nltk.word_tokenize(sent))):
             if hasattr(chunk, 'label'):
-                return (chunk.label(), ' '.join(c[0] for c in chunk)) """
+                return (chunk.label(), ' '.join(c[0] for c in chunk)) 
 
 
 
 def get_entities_spacy(cleaned):
     doc = nlp(cleaned)
-    return ([(X.text, X.label_) for X in doc.ents])
+    text_results = ([(X.text, X.label_) for X in doc.ents])
+    for word in text_results:
+        #if word:
+        return word
     #print(displacy.render(doc, style="ent"))
-    #return doc
 
+
+def get_entities_flair(cleaned):
+    
+    sentence = Sentence(cleaned)
+    # run NER over sentence
+    tagger.predict(sentence)
+    # iterate over entities and print
+    # iterate over entities and print
+    for entity in sentence.get_spans('ner'):
+        print(entity)
 
 # The goal of this function process the webpage and returns a list of labels -> entity ID
 def find_labels(payload):
@@ -69,21 +94,29 @@ def find_labels(payload):
     # We should get rid of the HTML tags and retrieve the text. How can we do it?
 
     cleaned = clean(payload)
-
-
     # Problem 2: Let's assume that we found a way to retrieve the text from a webpage. How can we recognize the
     # entities in the text?
+    
+    #print(cleaned)
+    if (cleaned!=''):
+       chunk = get_entities_nltk(cleaned)
+       if chunk == None:
+           return
 
-    if isinstance(cleaned, str):
-        chunks = get_entities_spacy(cleaned)
-        #print(chunks[1])
-        print(search(chunks[1][1]).items())
-    # Problem 3: We now have to disambiguate the entities in the text. For instance, let's assugme that we identified
-    # the entity "Michael Jordan". Which entity in Wikidata is the one that is referred to in the text?
+       #print(chunk)     
+       # Problem 3: We now have to disambiguate the entities in the text. For instance, let's assugme that we identified
+       # the entity "Michael Jordan". Which entity in Wikidata is the one that is referred to in the text?
 
-        #QUERY = chunks[1]
-        #for entity, labels in search(QUERY).items():
-         #   print(entity, labels)
+       print(chunk) 
+       QUERY = chunk[1]
+       po_dict = {}
+       for entity, labels in search(QUERY).items():
+            candidate_pos = (base_model(entity))
+            po_dict[entity] = candidate_pos    
+       max_key = max(po_dict, key=po_dict.get)
+       
+       print(max_key)
+            
 
 
     # To tackle this problem, you have access to two tools that can be useful. The first is a SPARQL engine (Trident)
@@ -134,4 +167,3 @@ if __name__ == '__main__':
                 #print(key + '\t' + label + '\t' + wikidata_id)
                 pass
 
-    
