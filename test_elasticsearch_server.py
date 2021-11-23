@@ -9,7 +9,13 @@ def search(query):
     id_labels = {}
     if response:
         for hit in response['hits']['hits']:
-            label = hit['_source']['schema_name']
+            source = hit['_source']
+            if ('schema_name' in source):
+                label = source['schema_name']
+            elif ('schema_description' in source):
+                label = source['schema_description']
+            else:
+                continue
             id = hit['_id']
             id_labels.setdefault(id, set()).add(label)
     return id_labels
