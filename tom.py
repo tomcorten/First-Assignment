@@ -107,7 +107,6 @@ def find_labels(payload):
        # Problem 3: We now have to disambiguate the entities in the text. For instance, let's assugme that we identified
        # the entity "Michael Jordan". Which entity in Wikidata is the one that is referred to in the text?
 
-       print(chunk) 
        QUERY = chunk[1]
        po_dict = {}
        for entity, labels in search(QUERY).items():
@@ -115,7 +114,7 @@ def find_labels(payload):
             po_dict[entity] = candidate_pos    
        max_key = max(po_dict, key=po_dict.get)
        
-       print(max_key)
+       yield key, QUERY, max_key
             
 
 
@@ -137,10 +136,10 @@ def find_labels(payload):
     # For now, we are cheating. We are going to returthe labels that we stored in sample-labels-cheat.txt
     # Instead of doing that, you should process the text to identify the entities. Your implementation should return
     # the discovered disambiguated entities with the same format so that I can check the performance of your program.
-    cheats = dict((line.split('\t', 2) for line in open('data/sample-labels-cheat.txt').read().splitlines()))
-    for label, wikidata_id in cheats.items():
-        if key and (label in payload):
-            yield key, label, wikidata_id
+    # cheats = dict((line.split('\t', 2) for line in open('data/sample-labels-cheat.txt').read().splitlines()))
+    # for label, wikidata_id in cheats.items():
+    #     if key and (label in payload):
+    #         yield key, label, wikidata_id
 
 
 def split_records(stream):
@@ -164,6 +163,5 @@ if __name__ == '__main__':
     with gzip.open(INPUT, 'rt', errors='ignore') as fo:
         for record in split_records(fo):
             for key, label, wikidata_id in find_labels(record):
-                #print(key + '\t' + label + '\t' + wikidata_id)
-                pass
+                print(key + '\t' + label + '\t' + wikidata_id)
 
