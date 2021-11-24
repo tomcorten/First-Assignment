@@ -21,12 +21,31 @@ def link_entity(candidate):
         print("SUCCES")
         return True
 
+def memory():
+    """
+    Get node total memory and memory usage
+    """
+    with open('/proc/meminfo', 'r') as mem:
+        ret = {}
+        tmp = 0
+        for i in mem:
+            sline = i.split()
+            if str(sline[0]) == 'MemTotal:':
+                ret['total'] = int(sline[1])
+            elif str(sline[0]) in ('MemFree:', 'Buffers:', 'Cached:'):
+                tmp += int(sline[1])
+        ret['free'] = tmp
+        ret['used'] = int(ret['total']) - int(ret['free'])
+    return ret
 
 def base_model(candidate):
     db = trident.Db(KBPATH)
     id_of_test = db.lookup_id(candidate)
-    contents_of_subject = db.po(id_of_test)
-    return (len(contents_of_subject))
+    object_from_subject = db.o_aggr_froms(id_of_test)
+    object_from_subject_text = [db.lookup_str(i) for i in object_from_subject]
+    # contents_of_subject = db.po(id_of_test)
+    # return (len(contents_of_subject))
+    return (len(object_from_subject_text))
 
 
 # Load the KB

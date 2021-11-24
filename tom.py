@@ -74,7 +74,8 @@ def get_entities_flair(cleaned):
     # iterate over entities and print
     # iterate over entities and print
     for entity in sentence.get_spans('ner'):
-        print(entity)
+        pass
+        # print(entity)
 
 # The goal of this function process the webpage and returns a list of labels -> entity ID
 def find_labels(payload):
@@ -99,22 +100,23 @@ def find_labels(payload):
     
     #print(cleaned)
     if (cleaned!=''):
-       chunk = get_entities_nltk(cleaned)
-       if chunk == None:
-           return
+        chunk = get_entities_nltk(cleaned)
+        if chunk == None:
+            return
 
-       #print(chunk)     
-       # Problem 3: We now have to disambiguate the entities in the text. For instance, let's assugme that we identified
-       # the entity "Michael Jordan". Which entity in Wikidata is the one that is referred to in the text?
+        #print(chunk)     
+        # Problem 3: We now have to disambiguate the entities in the text. For instance, let's assugme that we identified
+        # the entity "Michael Jordan". Which entity in Wikidata is the one that is referred to in the text?
 
-       QUERY = chunk[1]
-       po_dict = {}
-       for entity, labels in search(QUERY).items():
+        QUERY = chunk[1]
+        po_dict = {}
+        for entity, labels in search(QUERY).items():
             candidate_pos = (base_model(entity))
-            po_dict[entity] = candidate_pos    
-       max_key = max(po_dict, key=po_dict.get)
-       
-       yield key, QUERY, max_key
+            po_dict[entity] = candidate_pos
+        if po_dict:
+            max_key = max(po_dict, key=po_dict.get)
+            if (max_key):
+                yield key, QUERY, max_key
             
 
 
