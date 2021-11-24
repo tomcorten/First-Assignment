@@ -93,7 +93,7 @@ def find_labels(payload):
     
     #print(cleaned)
     if (cleaned!=''):
-        chunk = get_entities_spacy(cleaned)
+        chunk = get_entities_nltk(cleaned)
 
         if chunk == None:
             return
