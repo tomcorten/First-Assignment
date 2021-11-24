@@ -7,10 +7,8 @@ from test_elasticsearch_server import search
 from test_sparqlTom import base_model
 from pprint import pprint
 
-#import spacy
-#from spacy import displacy
-#import en_core_web_sm
-#nlp = en_core_web_sm.load()
+import spacy 
+nlp = spacy.load("en_core_web_sm")
 
 #from flair.data import Sentence
 #from flair.models import SequenceTagger
@@ -31,7 +29,7 @@ def clean(data):
     clean = ""
 
     # Loop through every p tag within the payload  
-    for paragraph in soup.find_all('p'):
+    for paragraph in soup.find_all("p"):
     # Remove any left over HTML tags
         stripped = re.sub('<[^>]*>', '', str(paragraph))
             
@@ -44,8 +42,8 @@ def clean(data):
         # If the string has a length of more than 100
         # and contains less than 3 \n tags, 
         # add it to the final result
-        if strLength > 100 and nLength < 3:
-            clean += stripped + '\n'
+        # if strLength > 100 and nLength < 3:
+        clean += stripped + '\n'
     return clean.replace('\n', '')   
 
 
@@ -55,16 +53,11 @@ def get_entities_nltk(cleaned):
             if hasattr(chunk, 'label'):
                 return (chunk.label(), ' '.join(c[0] for c in chunk)) 
 
-
-
 def get_entities_spacy(cleaned):
     doc = nlp(cleaned)
-    text_results = ([(X.text, X.label_) for X in doc.ents])
+    text_results = ([(X.label_, X.text) for X in doc.ents])
     for word in text_results:
-        #if word:
         return word
-    #print(displacy.render(doc, style="ent"))
-
 
 def get_entities_flair(cleaned):
     
@@ -100,8 +93,19 @@ def find_labels(payload):
     
     #print(cleaned)
     if (cleaned!=''):
-        chunk = get_entities_nltk(cleaned)
+        chunk = get_entities_spacy(cleaned)
+
         if chunk == None:
+            return
+        elif chunk[0] == 'ORDINAL':
+            return
+        elif chunk[0] == 'CARDINAL':
+            return
+        elif chunk[0] == 'TIME':
+            return
+        elif chunk[0] == 'DATE':
+            return
+        elif chunk[0] == 'MONEY':
             return
 
         #print(chunk)     
@@ -110,14 +114,16 @@ def find_labels(payload):
 
         QUERY = chunk[1]
         po_dict = {}
-        for entity, labels in search(QUERY).items():
-            candidate_pos = (base_model(entity))
-            po_dict[entity] = candidate_pos
-        if po_dict:
-            max_key = max(po_dict, key=po_dict.get)
-            if (max_key):
-                yield key, QUERY, max_key
-            
+        try:
+            for entity, labels in search(QUERY).items():
+                candidate_pos = (base_model(entity))
+                po_dict[entity] = candidate_pos
+            if po_dict:
+                max_key = max(po_dict, key=po_dict.get)
+                if (max_key):
+                    yield key, QUERY, max_key
+        except:
+            return
 
 
     # To tackle this problem, you have access to two tools that can be useful. The first is a SPARQL engine (Trident)
