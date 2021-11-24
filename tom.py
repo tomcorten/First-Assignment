@@ -44,7 +44,7 @@ def clean(data):
         # add it to the final result
         # if strLength > 100 and nLength < 3:
         clean += stripped + '\n'
-    return clean.replace('\n', '')   
+    return clean.replace('\n', ' ')   
 
 
 def get_entities_nltk(cleaned):   
@@ -108,7 +108,6 @@ def find_labels(payload):
         elif chunk[0] == 'MONEY':
             return
 
-        #print(chunk)     
         # Problem 3: We now have to disambiguate the entities in the text. For instance, let's assugme that we identified
         # the entity "Michael Jordan". Which entity in Wikidata is the one that is referred to in the text?
 
