@@ -4,7 +4,7 @@ import re
 from typing import Text
 from bs4 import BeautifulSoup
 from test_elasticsearch_server import search
-from test_sparql import base_model
+from test_sparqlTom import base_model
 from pprint import pprint
 
 #import spacy
