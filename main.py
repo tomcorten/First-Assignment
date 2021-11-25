@@ -12,8 +12,18 @@ def clean(data):
     soup = BeautifulSoup(data, 'html.parser')
     clean = ""
 
+      
+    options = [
+            "h1",
+            # "h2",
+            # "h3",
+            # "h4",
+            "p",
+            # "a",
+        ]
+
     # Loop through every p tag within the payload  
-    for paragraph in soup.find_all("p"):
+    for paragraph in soup.find_all(options):
     # Remove any left over HTML tags
         stripped = re.sub('<[^>]*>', '', str(paragraph))
             
@@ -26,8 +36,9 @@ def clean(data):
         # If the string has a length of more than 100
         # and contains less than 3 \n tags, 
         # add it to the final result
-        # if strLength > 100 and nLength < 3:
-        clean += stripped + '\n'
+        if strLength > 50 and nLength < 4:
+            clean += stripped + '\n'
+
     return clean.replace('\n', ' ')   
 
 def find_labels(payload):
@@ -39,6 +50,7 @@ def find_labels(payload):
         if line.startswith(KEYNAME):
             key = line.split(': ')[1]
             break
+
 
     cleaned = clean(payload)
 
