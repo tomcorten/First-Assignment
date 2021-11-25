@@ -3,7 +3,7 @@ import re
 
 from bs4 import BeautifulSoup
 
-from ner import get_entities_nltk, get_entities_spacy
+from ner import get_entities_nltk, get_entities_spacy, get_entities_stanza
 from wikidata import trident_search, elastic_search
 
 KEYNAME = "WARC-TREC-ID"
@@ -43,33 +43,32 @@ def find_labels(payload):
     cleaned = clean(payload)
 
     if (cleaned!=''):
-        chunk = get_entities_nltk(cleaned)
+        for chunk in get_entities_nltk(cleaned):
+            if chunk == None:
+                continue
+            elif chunk[0] == 'ORDINAL':
+                continue
+            elif chunk[0] == 'CARDINAL':
+                continue
+            elif chunk[0] == 'TIME':
+                continue
+            elif chunk[0] == 'DATE':
+                continue
+            elif chunk[0] == 'MONEY':
+                continue
 
-        if chunk == None:
-            return
-        elif chunk[0] == 'ORDINAL':
-            return
-        elif chunk[0] == 'CARDINAL':
-            return
-        elif chunk[0] == 'TIME':
-            return
-        elif chunk[0] == 'DATE':
-            return
-        elif chunk[0] == 'MONEY':
-            return
-
-        QUERY = chunk[1]
-        po_dict = {}
-        try:
-            for entity, labels in elastic_search(QUERY).items():
-                candidate_pos = (trident_search(entity))
-                po_dict[entity] = candidate_pos
-            if po_dict:
-                max_key = max(po_dict, key=po_dict.get)
-                if (max_key):
-                    yield key, QUERY, max_key
-        except:
-            return
+            QUERY = chunk[1]
+            po_dict = {}
+            try:
+                for entity, labels in elastic_search(QUERY).items():
+                    candidate_pos = (trident_search(entity))
+                    po_dict[entity] = candidate_pos
+                if po_dict:
+                    max_key = max(po_dict, key=po_dict.get)
+                    if (max_key):
+                        yield key, QUERY, max_key
+            except:
+                continue
 
 
 def split_records(stream):
