@@ -26,7 +26,7 @@ python -m pip install -r requirements.txt
 
 or run the following command:
 ```console
-pip3 install --upgrade pip && pip3 install --user -U nltk && pip3 install beautifulsoup4 && pip3 install spacy && python3 -m spacy download en
+pip3 install --upgrade pip && pip3 install --user -U nltk && pip3 install beautifulsoup4 && pip3 install spacy && python3 -m spacy download en && pip3 install stanza
 ```
 
 ##### 2. Start the ElasticSearch server
