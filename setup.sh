@@ -8,6 +8,7 @@ declare -a arr=(
     "pip3 install --user flair" 
     "pip3 install spacy"
     "python3 -m spacy download en"
+    "pip3 install stanza"
 )
 
 echo "Upgrading pip ..."
