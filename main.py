@@ -55,7 +55,7 @@ def find_labels(payload):
     cleaned = clean(payload)
 
     if (cleaned!=''):
-        for chunk in get_entities_nltk(cleaned):
+        for chunk in get_entities_spacy(cleaned):
             if chunk == None:
                 continue
             elif chunk[0] == 'ORDINAL':
@@ -105,4 +105,3 @@ if __name__ == '__main__':
         for record in split_records(fo):
             for key, label, wikidata_id in find_labels(record):
                 print(key + '\t' + label + '\t' + wikidata_id)
-
