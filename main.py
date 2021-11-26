@@ -40,8 +40,9 @@ def clean(data):
     return clean.replace('\n', ' ')   
 
 def find_labels(payload):
+    result = []
     if payload == '':
-        return
+        return result
 
     key = None
     for line in payload.splitlines():
@@ -70,15 +71,15 @@ def find_labels(payload):
                 if po_dict:
                     max_key = max(po_dict, key=po_dict.get)
                     if (max_key):
-                        print(key, QUERY, max_key)
-                        yield key, QUERY, max_key
+                        result.append([key, QUERY, max_key])
             # Catch connection errors from elastic search
             except ConnectionError as e:
                 print("Error connecting to elastic search")
                 raise e
-            # Any other errors continue the loop
+            # Any other errors continue
             except:
                 continue
+    return result
 
 
 def split_records(stream):
@@ -99,15 +100,25 @@ if __name__ == '__main__':
         print('Usage: python starter-code.py INPUT')
         sys.exit(0)
 
+    filename = "sample_predictions.tsv"
+    open(filename, 'w').close()
+
     threads = []
     with gzip.open(INPUT, 'rt', errors='ignore') as fo:
         for record in split_records(fo):
             def find():
-                for key, label, wikidata_id in find_labels(record):
+                results = []
+                for result in find_labels(record):
+                    key = result[0]
+                    label = result[1]
+                    wikidata_id = result[2]
+
                     print(key + '\t' + label + '\t' + wikidata_id)
+                    results.append([key, label, wikidata_id])
+                    
+                file = open(filename, "a")  
+                file.write("".join([result[0] + '\t' + result[1] + '\t' + result[2] + '\n' for result in results]))
+                file.close()
+
             threads.append(threading.Thread(target=find))
             threads[len(threads) - 1].start()
-    
-    l = threading.Lock()
-    l.acquire()
-    l.acquire()
