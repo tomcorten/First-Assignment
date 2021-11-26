@@ -28,7 +28,7 @@ def find_labels(payload):
 
         # Loop through each named entitiy chunk
         for chunk in get_entities_spacy(cleaned):
-
+            
             # If the chunk is empty continue
             if chunk == None:
                 continue
@@ -37,17 +37,21 @@ def find_labels(payload):
             po_dict = {}
             try:
                 for entity, labels in elastic_search(QUERY).items():
+                    
                     for candidate_pos in trident_search(entity):
+
                         po_dict[entity] = candidate_pos
                             
                 if po_dict:
                     max_key = max(po_dict, key=po_dict.get)
                     if (max_key):
                         result.append([key, QUERY, max_key])
+            
             # Catch connection errors from elastic search
             except ConnectionError as e:
                 print("Error connecting to elastic search")
                 raise e
+
             except Exception as e:
                 print(key, e)
                 continue

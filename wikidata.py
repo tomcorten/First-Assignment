@@ -39,7 +39,7 @@ def trident_search(entity):
 def elastic_search(query, n=20):
     e = Elasticsearch()
     p = { "query" : { "query_string" : { "query" : query }}}
-    response = e.search(index="wikidata_en", body=json.dumps(p), size=n)
+    response = e.search(index="wikidata_en", body=json.dumps(p), size=n, request_timeout=30)
     id_labels = {}
     if response:
         for hit in response['hits']['hits']:
