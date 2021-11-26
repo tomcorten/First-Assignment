@@ -1,43 +1,13 @@
+# Dependencies
 import gzip
-import re
-
 import threading
 
-from bs4 import BeautifulSoup
-
+# Modules
+from clean import clean
 from ner import get_entities_nltk, get_entities_spacy, get_entities_stanza
 from wikidata import trident_search, elastic_search
 
 KEYNAME = "WARC-TREC-ID"
-
-def clean(data):
-    soup = BeautifulSoup(data, 'html.parser')
-    clean = ""
-
-
-    options = [
-            "h1",
-            "p",
-    ]
-
-    # Loop through every specified tag within the payload  
-    for paragraph in soup.find_all(options):
-    # Remove any left over HTML tags
-        stripped = re.sub('<[^>]*>', '', str(paragraph))
-            
-        # Number of \n tags in the stripped string
-        nLength = len(stripped.split('\n'))
-                
-        # The length of the string
-        strLength = len(stripped)
-
-        # If the string has a length of more than 100
-        # and contains less than 3 \n tags, 
-        # add it to the final result
-        if strLength > 50 and nLength < 4:
-            clean += stripped + '\n'
-
-    return clean.replace('\n', ' ')   
 
 def find_labels(payload):
     result = []
@@ -50,18 +20,19 @@ def find_labels(payload):
             key = line.split(': ')[1]
             break
 
+
     # Get the cleaned text from the payload
     cleaned = clean(payload)
 
     if (cleaned!=''):
+
         # Loop through each named entitiy chunk
         for chunk in get_entities_spacy(cleaned):
 
-            # print(chunk[0])
-
+            # If the chunk is empty continue
             if chunk == None:
                 continue
- 
+            
             QUERY = chunk[1]
             po_dict = {}
             try:
