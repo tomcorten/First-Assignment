@@ -1,8 +1,8 @@
 # Assignment 1a
 Alex Antonides - 2693298 - a.m.antonides@student.vu.nl
 Eoan O'Dea - 2732791 - e.odea@student.vu.nl
-Tom Corten - x - t.corten@student.vu.nl
-Max Wassenberg - x - m.wassenberg@student.vu.nl
+Tom Corten - 2618068 - t.a.corten@student.vu.nl
+Max Wassenberg - 2579797 - m.n.wassenberg@student.vu.nl
 
 ## Design Choices and Rationale
 We started the assignment by focusing on the problems described in the starter code file. We found two solutions to clean the html, the first and simple one was to remove all the HTML tags with a regular expression, however, this left us with CSS/JS code. The second solution, the one we uses now, was to use the library BeautifulSoup to parse the HTML and to read only the `<p>` and `<h1>` tags. We could have read anchor links as well, but most of the times theses anchor links were wrapped in paragraph tags, causing duplicate results.
