@@ -9,19 +9,32 @@ import threading
 
 lock = threading.Lock()
 
+class TridentHandler:
+    def __init__(self, db):
+        self._terms = {}
+        self._db = db
+
+    def lookup(self, term):
+        if term not in self._terms:
+            self._terms[term] = self._db.lookup_id(term)
+        return self._terms[term]
+    
+    def o_aggr_froms(self, term):
+        return self._db.o_aggr_froms(self.lookup(term))
+
+db = trident.Db(KBPATH)
+handler = TridentHandler(db)
+
 def trident_search(entity):
     lock.acquire()
-    db = trident.Db(KBPATH)
-    lock.release()
-    lock.acquire()
-    object_from_subject = handler.o_aggr_froms(db, entity)
-    lock.release()
-    lock.acquire()
-    object_from_subject_text = [db.lookup_str(i) for i in object_from_subject]
-    lock.release()
-    lock.acquire()
+    
+    object_from_subject = handler.o_aggr_froms(entity)
+    object_from_subject_text = [handler._db.lookup_str(i) for i in object_from_subject]
     yield (len(object_from_subject_text))
+    
     lock.release()
+
+
 
 def elastic_search(query, n=20):
     e = Elasticsearch()
@@ -40,17 +53,3 @@ def elastic_search(query, n=20):
             id = hit['_id']
             id_labels.setdefault(id, set()).add(label)
     return id_labels
-
-class TridentHandler:
-    def __init__(self):
-        self._terms = {}
-
-    def lookup(self, db, term):
-        if term not in self._terms:
-            self._terms[term] = db.lookup_id(term)
-        return self._terms[term]
-    
-    def o_aggr_froms(self, db, term):
-        return self.db.o_aggr_froms(self.lookup(db, term))
-
-handler = TridentHandler()

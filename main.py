@@ -37,8 +37,9 @@ def find_labels(payload):
             po_dict = {}
             try:
                 for entity, labels in elastic_search(QUERY).items():
-                    candidate_pos = (trident_search(entity))
-                    po_dict[entity] = candidate_pos
+                    for candidate_pos in trident_search(entity):
+                        po_dict[entity] = candidate_pos
+                            
                 if po_dict:
                     max_key = max(po_dict, key=po_dict.get)
                     if (max_key):
@@ -47,8 +48,8 @@ def find_labels(payload):
             except ConnectionError as e:
                 print("Error connecting to elastic search")
                 raise e
-            # Any other errors continue
-            except:
+            except Exception as e:
+                print(key, e)
                 continue
     return result
 
