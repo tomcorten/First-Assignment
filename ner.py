@@ -31,6 +31,13 @@ def get_entities_nltk(cleaned):
 
 # Get named entities using spacy
 def get_entities_spacy(cleaned):
+    """
+    Runs tokenizer, tagger, parser and NER on the provided text
+
+    @param cleaned: A string of raw text
+
+    @returns list[tuple] - resulted named entities in chunks
+    """
     # Labels we are not interested in
     blacklist = ['ORDINAL', 'CARDINAL', 'TIME', 'DATE', 'MONEY']
 
