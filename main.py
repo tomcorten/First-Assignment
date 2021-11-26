@@ -41,7 +41,7 @@ def find_labels(payload):
                     for candidate_pos in trident_search(entity):
 
                         po_dict[entity] = candidate_pos
-                            
+
                 if po_dict:
                     max_key = max(po_dict, key=po_dict.get)
                     if (max_key):

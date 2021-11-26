@@ -17,10 +17,9 @@ def get_entities_nltk(cleaned):
     tokenized_words = (
         nltk.word_tokenize(sent, preserve_line=True) for sent in nltk.sent_tokenize(cleaned)
     )
-
+    print(tokenized_words)
     # Run POS tagging on tokenized words
     for sent in nltk.pos_tag_sents(tokenized_words):
-        
         # Convert to bigrams for Multi-words
         for items in list(nltk.bigrams(sent)):
             # Convert items to chunks
