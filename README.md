@@ -41,7 +41,7 @@ sh start_elasticsearch_server.sh
 ```
 
 ### Deployment
-Once the packagess have been installed, the project will be ready for deployment. 
+Once the packages have been installed, the project will be ready for deployment. 
 
 #### Local
 
