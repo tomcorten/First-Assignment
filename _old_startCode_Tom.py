@@ -1,6 +1,5 @@
 import _ne_based_Tom
 
-
 PERS = _ne_based_Tom.get_random_entities('P31' ,'Q5') # get 20 random instances of Q5: human
 LOC = _ne_based_Tom.get_random_entities('P31','Q486972') # get 20 random instances of Q486972: human settlement
 ORG = _ne_based_Tom.get_random_entities('P31','Q6881511') # get 20 random instances of Q6881511: enterprise

@@ -1,5 +1,15 @@
 # Assignment 1a
-By us
+Alex Antonides - 2693298 - a.m.antonides@student.vu.nl
+Eoan O'Dea - 2732791 - e.odea@student.vu.nl
+Tom Corten - x - t.corten@student.vu.nl
+Max Wassenberg - x - m.wassenberg@student.vu.nl
+
+## Design Choices and Rationale
+We started the assignment by focusing on the problems described in the starter code file. We found two solutions to clean the html, the first and simple one was to remove all the HTML tags with a regular expression, however, this left us with CSS/JS code. The second solution, the one we uses now, was to use the library BeautifulSoup to parse the HTML and to read only the <p> and <h1> tags. We could have read anchor links as well, but most of the times theses anchor links were wrapped in paragraph tags, causing duplicate results.
+We found many different solutions for the second problem of the starter code, to recognize the entities within the text. We used the following packages: NLTK, Spacy, Stanza, BERT, and Flair. However, we didn't like the processing time of Flair, furthermore, BERT only returned unigrams, and Stanza returned faulty results. 
+We decided to use <x> in the end, due to <y>. 
+
+The solution to the final problem, we used ElasticSearch and Trident to refine the results. To improve the processing, we decided to add multithreading to the program.
 
 ## Getting Started
 
@@ -20,11 +30,6 @@ sh setup.sh
 ```
 
 or run the following command:
-```console   
-python -m pip install -r requirements.txt
-```
-
-or run the following command:
 ```console
 pip3 install --upgrade pip && pip3 install --user -U nltk && pip3 install beautifulsoup4 && pip3 install spacy && python3 -m spacy download en && pip3 install stanza
 ```
@@ -36,7 +41,7 @@ sh start_elasticsearch_server.sh
 ```
 
 ### Deployment
-Once the packagess have been installed, the project will be ready for deployment. 
+Once the packages have been installed, the project will be ready for deployment. 
 
 #### Local
 

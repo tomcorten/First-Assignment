@@ -28,12 +28,26 @@ def get_entities_nltk(cleaned):
                 if hasattr(chunk, 'label'):
                         yield (chunk.label(), ' '.join(c[0] for c in chunk)) 
 
-
+# Get named entities using spacy
 def get_entities_spacy(cleaned):
+    """
+    Runs tokenizer, tagger, parser and NER on the provided text
+
+    @param cleaned: A string of raw text
+
+    @returns list[tuple] - resulted named entities in chunks
+    """
+    # Labels we are not interested in
+    blacklist = ['ORDINAL', 'CARDINAL', 'TIME', 'DATE', 'MONEY']
+
+
     doc = spacy_nlp(cleaned)
-    text_results = ([(X.label_, X.text) for X in doc.ents])
+
+    # return text results
+    text_results = ([(X.label_, X.text) for X in doc.ents if X.label_ not in (blacklist)])
     return text_results
 
+# Get named entities using stanza
 def get_entities_stanza(cleaned):
     doc = stanza_nlp(cleaned)
     text_results = ([(ent.type, ent.text) for sent in doc.sentences for ent in sent.ents])
