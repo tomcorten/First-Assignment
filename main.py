@@ -5,19 +5,19 @@ import threading
 # Modules
 from clean import clean
 from ner_nltk import get_entities_nltk, get_entities_spacy, get_entities_stanza
-from wikidata_Tom import get_amount_objects, elastic_search, get_random_entities, get_predicates_overlap, check_candidate
+from wikidata import get_amount_objects, elastic_search, get_random_entities, get_predicates_overlap, check_candidate
 
 KEYNAME = "WARC-TREC-ID"
 
-PERS = get_random_entities('P31' ,'Q5') # get 20 random instances of Q5: human
-LOC = get_random_entities('P31','Q486972') # get 20 random instances of Q486972: human settlement
-ORG = get_random_entities('P31','Q6881511') # get 20 random instances of Q6881511: enterprise
+# PERS = get_random_entities('P31' ,'Q5') # get 20 random instances of Q5: human
+# LOC = get_random_entities('P31','Q486972') # get 20 random instances of Q486972: human settlement
+# ORG = get_random_entities('P31','Q6881511') # get 20 random instances of Q6881511: enterprise
 
-pers_overlap = get_predicates_overlap(PERS)
-org_overlap = get_predicates_overlap(ORG)
-loc_overlap = get_predicates_overlap(LOC)
+# pers_overlap = get_predicates_overlap(PERS)
+# org_overlap = get_predicates_overlap(ORG)
+# loc_overlap = get_predicates_overlap(LOC)
 
-overlap_dict = {'PERSON' : pers_overlap, 'ORG' : org_overlap, 'GPE' : loc_overlap}
+# overlap_dict = {'PERSON' : pers_overlap, 'ORG' : org_overlap, 'GPE' : loc_overlap}
 
 LABEL_DICT = {}
 
@@ -47,10 +47,18 @@ def find_labels(payload):
             po_dict = {}
             try:
                 for entity, labels in elastic_search(QUERY).items():
-                    if chunk[0] in overlap_dict.keys():           
-                            entity_page = check_candidate(chunk, entity ,overlap_dict)
-                            if entity_page:
-                                result.append([key, QUERY, max_key])
+                    # Ignore labels that are only numbers and special characters
+                    label = next(iter(labels))
+                    
+                    if label.isdigit() or "&" in label: 
+                        continue
+
+                    # Attempted predicates overlap, not finished on time
+                    # if chunk[0] in overlap_dict.keys():           
+                    #         entity_page = check_candidate(chunk, entity ,overlap_dict)
+                    #         if entity_page:
+                    #             result.append([key, QUERY, chunk[1]])
+
                     for candidate_pos in get_amount_objects(entity):
                         po_dict[entity] = candidate_pos
                 if po_dict:
@@ -89,22 +97,19 @@ if __name__ == '__main__':
     filename = "sample_predictions.tsv"
     open(filename, 'w').close()
 
-    threads = []
     with gzip.open(INPUT, 'rt', errors='ignore') as fo:
         for record in split_records(fo):
-            def find():
-                results = []
-                for result in find_labels(record):
-                    key = result[0]
-                    label = result[1]
-                    wikidata_id = result[2]
+            results = []
+            for result in find_labels(record):
+                key = result[0]
+                label = result[1]
+                wikidata_id = result[2]
 
-                    #print(key + '\t' + label + '\t' + wikidata_id)
-                    results.append([key, label, wikidata_id])
-                    
-                file = open(filename, "a")  
-                file.write("".join([result[0] + '\t' + result[1] + '\t' + result[2] + '\n' for result in results]))
-                file.close()
+                print(key + '\t' + label + '\t' + wikidata_id)
+                results.append([key, label, wikidata_id])
+                
+            file = open(filename, "a")  
+            file.write("".join([result[0] + '\t' + result[1] + '\t' + result[2] + '\n' for result in results]))
+            file.close()
 
-            threads.append(threading.Thread(target=find))
-            threads[len(threads) - 1].start()
+            
