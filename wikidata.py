@@ -4,7 +4,7 @@ import threading
 
 from elasticsearch import Elasticsearch
 
-from TridentHandler import TridentHandler
+from tridentHandler import TridentHandler
 
 
 KBPATH='assets/wikidata-20200203-truthy-uri-tridentdb'
@@ -27,17 +27,17 @@ def trident_search(entity):
     @yields the length of the object from subject text
     """
 
-    lock.acquire()
+    # lock.acquire()
     
     object_from_subject = handler.o_aggr_froms(entity)
     object_from_subject_text = [handler._db.lookup_str(i) for i in object_from_subject]
     yield (len(object_from_subject_text))
     
-    lock.release()
+    # lock.release()
 
 
 
-def elastic_search(query, n=20):
+def elastic_search(query, n=10):
     """
     Runs a query on the elastic search engine
 

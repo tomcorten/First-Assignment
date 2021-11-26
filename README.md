@@ -6,6 +6,7 @@ Max Wassenberg - x - m.wassenberg@student.vu.nl
 
 ## Design Choices and Rationale
 We started the assignment by focusing on the problems described in the starter code file. We found two solutions to clean the html, the first and simple one was to remove all the HTML tags with a regular expression, however, this left us with CSS/JS code. The second solution, the one we uses now, was to use the library BeautifulSoup to parse the HTML and to read only the `<p>` and `<h1>` tags. We could have read anchor links as well, but most of the times theses anchor links were wrapped in paragraph tags, causing duplicate results.
+
 We found many different solutions for the second problem of the starter code, to recognize the entities within the text. We used the following packages: NLTK, Spacy, Stanza, BERT, and Flair. However, we didn't like the processing time of Flair, furthermore, BERT only returned unigrams, and Stanza returned faulty results. 
 We decided to use <x> in the end, due to <y>. 
 
