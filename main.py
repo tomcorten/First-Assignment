@@ -14,17 +14,13 @@ def clean(data):
     soup = BeautifulSoup(data, 'html.parser')
     clean = ""
 
-      
+
     options = [
             "h1",
-            # "h2",
-            # "h3",
-            # "h4",
             "p",
-            # "a",
-        ]
+    ]
 
-    # Loop through every p tag within the payload  
+    # Loop through every specified tag within the payload  
     for paragraph in soup.find_all(options):
     # Remove any left over HTML tags
         stripped = re.sub('<[^>]*>', '', str(paragraph))
@@ -53,24 +49,18 @@ def find_labels(payload):
             key = line.split(': ')[1]
             break
 
-
+    # Get the cleaned text from the payload
     cleaned = clean(payload)
 
     if (cleaned!=''):
+        # Loop through each named entitiy chunk
         for chunk in get_entities_spacy(cleaned):
+
+            # print(chunk[0])
+
             if chunk == None:
                 continue
-            elif chunk[0] == 'ORDINAL':
-                continue
-            elif chunk[0] == 'CARDINAL':
-                continue
-            elif chunk[0] == 'TIME':
-                continue
-            elif chunk[0] == 'DATE':
-                continue
-            elif chunk[0] == 'MONEY':
-                continue
-
+ 
             QUERY = chunk[1]
             po_dict = {}
             try:
@@ -80,7 +70,13 @@ def find_labels(payload):
                 if po_dict:
                     max_key = max(po_dict, key=po_dict.get)
                     if (max_key):
+                        print(key, QUERY, max_key)
                         yield key, QUERY, max_key
+            # Catch connection errors from elastic search
+            except ConnectionError as e:
+                print("Error connecting to elastic search")
+                raise e
+            # Any other errors continue the loop
             except:
                 continue
 
