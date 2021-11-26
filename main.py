@@ -1,6 +1,6 @@
 import gzip
 import re
-
+import _ne_based_Tom
 from bs4 import BeautifulSoup
 
 from ner import get_entities_nltk, get_entities_spacy, get_entities_stanza
