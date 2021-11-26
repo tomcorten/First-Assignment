@@ -1,31 +1,32 @@
-import json
-
 import trident
-KBPATH='assets/wikidata-20200203-truthy-uri-tridentdb'
+import json
+import threading 
 
 from elasticsearch import Elasticsearch
 
-import threading 
+from TridentHandler import TridentHandler
 
+
+KBPATH='assets/wikidata-20200203-truthy-uri-tridentdb'
+
+# For opening up multiple threads
 lock = threading.Lock()
 
-class TridentHandler:
-    def __init__(self, db):
-        self._terms = {}
-        self._db = db
-
-    def lookup(self, term):
-        if term not in self._terms:
-            self._terms[term] = self._db.lookup_id(term)
-        return self._terms[term]
-    
-    def o_aggr_froms(self, term):
-        return self._db.o_aggr_froms(self.lookup(term))
-
+# Initialise DB
 db = trident.Db(KBPATH)
+# Instanciate TridentHandler class with DB
 handler = TridentHandler(db)
 
 def trident_search(entity):
+    """
+    Searches the Trident knowledge base for 
+    the entity on it's own thread
+
+    @param: entity: The entity to search the KB for
+
+    @yields the length of the object from subject text
+    """
+
     lock.acquire()
     
     object_from_subject = handler.o_aggr_froms(entity)
@@ -37,6 +38,14 @@ def trident_search(entity):
 
 
 def elastic_search(query, n=20):
+    """
+    Runs a query on the elastic search engine
+
+    @param: query: The query to run
+    @param: n: How many entities to return (defaults to 20)
+
+    @returns: the ID labels
+    """
     e = Elasticsearch()
     p = { "query" : { "query_string" : { "query" : query }}}
     response = e.search(index="wikidata_en", body=json.dumps(p), size=n, request_timeout=30)
@@ -52,10 +61,10 @@ def elastic_search(query, n=20):
                 continue
             id = hit['_id']
             id_labels.setdefault(id, set()).add(label)
-    return id_labels
+        return id_labels
 
-    def get_p_overlap(entities):
 
+def get_p_overlap(entities):
     #define list which holds predicates for each entity
     p_list = []
     #get all predicates

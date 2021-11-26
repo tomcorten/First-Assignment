@@ -4,7 +4,12 @@ import threading
 
 # Modules
 from clean import clean
-from ner import get_entities_nltk, get_entities_spacy, get_entities_stanza
+from ner_spacy import get_entities_spacy
+
+# Other attempted approaches
+# from ner_nltk import get_entities_nltk
+# from ner_stanza import get_entities_stanza
+
 from wikidata import trident_search, elastic_search
 
 KEYNAME = "WARC-TREC-ID"
@@ -37,9 +42,11 @@ def find_labels(payload):
             po_dict = {}
             try:
                 for entity, labels in elastic_search(QUERY).items():
-                    
+                    # Ignore labels that are only numbers
+                    if next(iter(labels)).isdigit():
+                        continue
+                    print("Checking ",labels)
                     for candidate_pos in trident_search(entity):
-
                         po_dict[entity] = candidate_pos
 
                 if po_dict:
