@@ -1,3 +1,4 @@
+#<<<<<<< HEAD:ner.py
 import spacy 
 spacy_nlp = spacy.load("en_core_web_sm")
 
@@ -7,9 +8,6 @@ nltk.download('averaged_perceptron_tagger')
 nltk.download('maxent_ne_chunker')
 nltk.download('words')
 
-import stanza
-stanza.download('en', processors='tokenize,ner')
-stanza_nlp = stanza.Pipeline(lang='en', processors='tokenize,ner')
 
 # Get named entities using NLTK
 def get_entities_nltk(cleaned):   
@@ -52,3 +50,35 @@ def get_entities_stanza(cleaned):
     doc = stanza_nlp(cleaned)
     text_results = ([(ent.type, ent.text) for sent in doc.sentences for ent in sent.ents])
     return text_results
+#=======
+# Import and download NLTK dependencies
+import nltk
+nltk.download('punkt')
+nltk.download('averaged_perceptron_tagger')
+nltk.download('maxent_ne_chunker')
+nltk.download('words')
+
+def get_entities_nltk(cleaned):
+    """
+    Runs NER on the provided text using NLTK
+
+    @param cleaned: A string of raw text
+
+    @returns list[tuple] - resulted named entities in chunks
+    """
+
+    # Build tokenized words using the sentenice tokenizer and word tokenizer
+    tokenized_words = (
+        nltk.word_tokenize(sent, preserve_line=True) for sent in nltk.sent_tokenize(cleaned)
+    )
+    print(tokenized_words)
+    # Run POS tagging on tokenized words
+    for sent in nltk.pos_tag_sents(tokenized_words):
+        # Convert to bigrams for Multi-words
+        for items in list(nltk.bigrams(sent)):
+            # Convert items to chunks
+            for chunk in nltk.ne_chunk(items):
+                # Check if the chunk contains a label, and if so join and return
+                if hasattr(chunk, 'label'):
+                        yield (chunk.label(), ' '.join(c[0] for c in chunk)) 
+#>>>>>>> 827d2532075ce6efd2d3a2b72891a641f99db6f5:ner_nltk.py

@@ -4,7 +4,7 @@ import threading
 
 # Modules
 from clean import clean
-from ner import get_entities_nltk, get_entities_spacy, get_entities_stanza
+from ner_nltk import get_entities_nltk, get_entities_spacy, get_entities_stanza
 from wikidata_Tom import get_amount_objects, elastic_search, get_random_entities, get_predicates_overlap, check_candidate
 
 KEYNAME = "WARC-TREC-ID"
@@ -19,6 +19,7 @@ loc_overlap = get_predicates_overlap(LOC)
 
 overlap_dict = {'PERSON' : pers_overlap, 'ORG' : org_overlap, 'GPE' : loc_overlap}
 
+LABEL_DICT = {}
 
 def find_labels(payload):
     result = []
@@ -42,18 +43,14 @@ def find_labels(payload):
             # If the chunk is empty continue
             if chunk == None:
                 continue
-            
             QUERY = chunk[1]
             po_dict = {}
-            A = {}
             try:
                 for entity, labels in elastic_search(QUERY).items():
                     if chunk[0] in overlap_dict.keys():           
-                        entity_page = check_candidate(chunk, entity ,overlap_dict)
-                        if entity_page:
-                            result.append([key, labels, entity])
-                            print(key, labels, entity)
-                            continue
+                            entity_page = check_candidate(chunk, entity ,overlap_dict)
+                            if entity_page:
+                                result.append([key, QUERY, max_key])
                     for candidate_pos in get_amount_objects(entity):
                         po_dict[entity] = candidate_pos
                 if po_dict:

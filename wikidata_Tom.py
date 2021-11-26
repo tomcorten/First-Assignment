@@ -35,6 +35,8 @@ def get_amount_objects(entity):
     
     lock.release()
 
+    
+
 def check_candidate(named_entity, entity_page ,overlap_dict):
 
     entity_predicates = get_predicates_from_subject(entity_page)
