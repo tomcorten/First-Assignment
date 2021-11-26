@@ -5,7 +5,6 @@ echo "Running Setup ..."
 declare -a arr=(
     "pip3 install --user -U nltk"
     "pip3 install beautifulsoup4"
-    "pip3 install --user flair"
     "pip3 install spacy"
     "python3 -m spacy download en"
     "pip3 install stanza"
