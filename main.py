@@ -1,6 +1,8 @@
 import gzip
 import re
 
+import threading
+
 from bs4 import BeautifulSoup
 
 from ner import get_entities_nltk, get_entities_spacy, get_entities_stanza
@@ -101,7 +103,15 @@ if __name__ == '__main__':
         print('Usage: python starter-code.py INPUT')
         sys.exit(0)
 
+    threads = []
     with gzip.open(INPUT, 'rt', errors='ignore') as fo:
         for record in split_records(fo):
-            for key, label, wikidata_id in find_labels(record):
-                print(key + '\t' + label + '\t' + wikidata_id)
+            def find():
+                for key, label, wikidata_id in find_labels(record):
+                    print(key + '\t' + label + '\t' + wikidata_id)
+            threads.append(threading.Thread(target=find))
+            threads[len(threads) - 1].start()
+    
+    l = threading.Lock()
+    l.acquire()
+    l.acquire()

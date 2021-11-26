@@ -5,12 +5,23 @@ KBPATH='assets/wikidata-20200203-truthy-uri-tridentdb'
 
 from elasticsearch import Elasticsearch
 
+import threading 
+
+lock = threading.Lock()
+
 def trident_search(entity):
+    lock.acquire()
     db = trident.Db(KBPATH)
-    id_of_test = db.lookup_id(entity)
-    object_from_subject = db.o_aggr_froms(id_of_test)
+    lock.release()
+    lock.acquire()
+    object_from_subject = handler.o_aggr_froms(db, entity)
+    lock.release()
+    lock.acquire()
     object_from_subject_text = [db.lookup_str(i) for i in object_from_subject]
-    return (len(object_from_subject_text))
+    lock.release()
+    lock.acquire()
+    yield (len(object_from_subject_text))
+    lock.release()
 
 def elastic_search(query, n=20):
     e = Elasticsearch()
@@ -29,3 +40,17 @@ def elastic_search(query, n=20):
             id = hit['_id']
             id_labels.setdefault(id, set()).add(label)
     return id_labels
+
+class TridentHandler:
+    def __init__(self):
+        self._terms = {}
+
+    def lookup(self, db, term):
+        if term not in self._terms:
+            self._terms[term] = db.lookup_id(term)
+        return self._terms[term]
+    
+    def o_aggr_froms(self, db, term):
+        return self.db.o_aggr_froms(self.lookup(db, term))
+
+handler = TridentHandler()
